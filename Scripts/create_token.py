@@ -174,9 +174,27 @@ def main():
         print("\n" + "="*80)
         print("SUCCESS! Long-Lived Access Token generated successfully:")
         print("="*80)
-        print(token)
+        # Print a masked version for security
+        print(token[:10] + "..." + token[-10:])
         print("="*80)
-        print("Copy this token and paste it into your Scripts/settings.json file.")
+        
+        # Automatically update settings.json
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        settings_path = os.path.join(script_dir, "settings.json")
+        if os.path.exists(settings_path):
+            try:
+                with open(settings_path, "r", encoding="utf-8") as f:
+                    settings = json.load(f)
+                settings["ha_token"] = token
+                settings["ha_url"] = ha_url
+                with open(settings_path, "w", encoding="utf-8") as f:
+                    json.dump(settings, f, indent=2)
+                print("SUCCESS: Scripts/settings.json has been automatically updated with the new Token and URL!")
+            except Exception as e:
+                print(f"Warning: Could not automatically update settings.json: {e}")
+                print("Please copy the token above and paste it manually into settings.json.")
+        else:
+            print("Warning: settings.json not found. Please paste the token manually into your settings configuration.")
     else:
         print("\nFailed to generate token. Please check your credentials, URL and connection.")
         sys.exit(1)
