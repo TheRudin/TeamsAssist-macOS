@@ -18,29 +18,17 @@ input_text:
     name: Microsoft Teams activity
     icon: mdi:phone-off
 
-# Template Sensors to format values and attributes for the UI
-sensor:
-  - platform: template
-    sensors:
-      teams_status: 
-        friendly_name: "Microsoft Teams status"
-        value_template: "{{states('input_text.teams_status')}}"
-        icon_template: "{{state_attr('input_text.teams_status','icon')}}"
+# Modern Template Sensors (Home Assistant 2021.5+)
+template:
+  - sensor:
+      - name: "Microsoft Teams status"
         unique_id: sensor.teams_status
-      teams_activity:
-        friendly_name: "Microsoft Teams activity"
-        value_template: "{{states('input_text.teams_activity')}}"
+        state: "{{ states('input_text.teams_status') }}"
+        icon: "{{ state_attr('input_text.teams_status', 'icon') }}"
+      - name: "Microsoft Teams activity"
         unique_id: sensor.teams_activity
-
-# Binary Sensor to monitor if the macOS background daemon is active
-binary_sensor:
-  - platform: template
-    sensors:
-      teams_monitoring:
-        friendly_name: "Microsoft Teams Monitoring"
-        value_template: "{{ is_state('binary_sensor.teams_monitoring', 'on') }}"
-        device_class: connectivity
-        unique_id: binary_sensor.teams_monitoring
+        state: "{{ states('input_text.teams_activity') }}"
+        icon: "{{ 'mdi:phone-in-talk-outline' if is_state('input_text.teams_activity', 'In a call') else 'mdi:phone-off' }}"
 ```
 
 *Note: Restart Home Assistant after adding these sensors to activate them.*
