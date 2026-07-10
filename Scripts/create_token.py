@@ -67,6 +67,7 @@ def generate_token(ha_url, username, password):
     # 2. Submit username and password
     print("Submitting credentials...")
     step_submit = http_post(f"{login_flow_url}/{flow_id}", {
+        "client_id": "http://localhost/",
         "username": username,
         "password": password
     })
@@ -80,6 +81,7 @@ def generate_token(ha_url, username, password):
         print("Home Assistant requested Multi-Factor Authentication (2FA).")
         mfa_code = input("Enter your 2FA verification code: ").strip()
         step_submit = http_post(f"{login_flow_url}/{flow_id}", {
+            "client_id": "http://localhost/",
             "code": mfa_code
         })
         if "error" in step_submit:
