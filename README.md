@@ -27,7 +27,52 @@ graph TD
 ## Installation & Setup
 
 ### 1. Home Assistant Preparation
-Configure the template sensors in your Home Assistant config to receive the updates. For detailed instructions, see the **[Home Assistant Setup Guide](HOMEASSISTANT_SETUP.md)**.
+
+Add the required sensors and helpers to your Home Assistant `configuration.yaml` file:
+
+```yaml
+# Input Text Helpers to receive states from the macOS script
+input_text:
+  teams_status:
+    name: Microsoft Teams status
+    icon: mdi:microsoft-teams
+  teams_activity:
+    name: Microsoft Teams activity
+    icon: mdi:phone-off
+
+# Template Sensors to display the values neatly in your UI
+sensor:
+  - platform: template
+    sensors:
+      teams_status: 
+        friendly_name: "Microsoft Teams status"
+        value_template: "{{states('input_text.teams_status')}}"
+        icon_template: "{{state_attr('input_text.teams_status','icon')}}"
+        unique_id: sensor.teams_status
+      teams_activity:
+        friendly_name: "Microsoft Teams activity"
+        value_template: "{{states('input_text.teams_activity')}}"
+        unique_id: sensor.teams_activity
+
+# Binary Sensor to monitor if the background daemon is active
+binary_sensor:
+  - platform: template
+    sensors:
+      teams_monitoring:
+        friendly_name: "Microsoft Teams Monitoring"
+        value_template: "{{ is_state('binary_sensor.teams_monitoring', 'on') }}"
+        device_class: connectivity
+        unique_id: binary_sensor.teams_monitoring
+```
+
+*Note: Restart Home Assistant to create these entities. For advanced automations (like automatic status light toggles and dashboard UI layouts), refer to the **[Home Assistant Setup Guide](HOMEASSISTANT_SETUP.md)**.*
+
+#### Import Blueprint
+
+Use the following blueprint to easily configure automations based on your Teams status (e.g. changing office lights):
+
+[![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FTheRudin%2FTeamsAssist-macOS%2Fblob%2Fmain%2FAutomation%2Fteams-light.yaml)
+
 
 ### 2. Generate Long-Lived Access Token (CLI Helper)
 You can easily generate your 10-year access token directly from the command line:
