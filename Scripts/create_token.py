@@ -2,6 +2,7 @@
 import os
 import sys
 import json
+import time
 import urllib.request
 import urllib.parse
 import urllib.error
@@ -50,8 +51,8 @@ def generate_token(ha_url, username, password):
     # 1. Start login flow
     print("Initiating login flow with Home Assistant...")
     flow_init = http_post(login_flow_url, {
-        "client_id": "http://localhost/",
-        "redirect_uri": "http://localhost/",
+        "client_id": ha_url,
+        "redirect_uri": ha_url,
         "handler": ["homeassistant", None]
     })
     
@@ -67,7 +68,7 @@ def generate_token(ha_url, username, password):
     # 2. Submit username and password
     print("Submitting credentials...")
     step_submit = http_post(f"{login_flow_url}/{flow_id}", {
-        "client_id": "http://localhost/",
+        "client_id": ha_url,
         "username": username,
         "password": password
     })
@@ -81,7 +82,7 @@ def generate_token(ha_url, username, password):
         print("Home Assistant requested Multi-Factor Authentication (2FA).")
         mfa_code = input("Enter your 2FA verification code: ").strip()
         step_submit = http_post(f"{login_flow_url}/{flow_id}", {
-            "client_id": "http://localhost/",
+            "client_id": ha_url,
             "code": mfa_code
         })
         if "error" in step_submit:
@@ -99,7 +100,7 @@ def generate_token(ha_url, username, password):
     token_resp = http_post(token_url, {
         "grant_type": "authorization_code",
         "code": auth_code,
-        "client_id": "http://localhost/"
+        "client_id": ha_url
     }, is_json=False)
     
     if "error" in token_resp:
@@ -142,7 +143,7 @@ def generate_token(ha_url, username, password):
         ws.send(json.dumps({
             "id": 1,
             "type": "auth/long_lived_access_token",
-            "client_name": "TeamsAssist-macOS-CLI",
+            "client_name": f"TeamsAssist macOS CLI {time.strftime('%Y-%m-%d %H:%M')}",
             "lifespan": 3650
         }))
         

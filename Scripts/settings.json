@@ -1,6 +1,6 @@
 {
-  "ha_token": "<Insert token>",
-  "ha_url": "<HA URL>",
+  "ha_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIxM2I5MDljN2E5ZTM0YmMzYTI4ZjgzMGY4ZDUxYmI5NCIsImlhdCI6MTc4MzY3MzIwOCwiZXhwIjoyMDk5MDMzMjA4fQ.QKOwK8tLJCnRvmQE2d9pUkW0HMdDdYa9dcCiCDscAQo",
+  "ha_url": "https://home.therudin.ch",
   "teams_version": "Auto",
   "check_interval": 2,
   "status_entity": "input_text.teams_status",

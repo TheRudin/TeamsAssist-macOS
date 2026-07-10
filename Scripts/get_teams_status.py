@@ -271,7 +271,7 @@ def main():
                     settings["status_friendly_name"],
                     icon="mdi:microsoft-teams"
                 )
-                if success or current_status is None:
+                if success:
                     current_status = status
             
             if activity and activity != current_activity:
@@ -284,7 +284,7 @@ def main():
                     settings["activity_friendly_name"],
                     icon=activity_icon
                 )
-                if success or current_activity is None:
+                if success:
                     current_activity = activity
             
             # Wait for next check
