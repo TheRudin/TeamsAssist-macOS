@@ -51,6 +51,7 @@ def generate_token(ha_url, username, password):
     print("Initiating login flow with Home Assistant...")
     flow_init = http_post(login_flow_url, {
         "client_id": "http://localhost/",
+        "redirect_uri": "http://localhost/",
         "handler": ["homeassistant", None]
     })
     
