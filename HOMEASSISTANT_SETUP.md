@@ -148,5 +148,5 @@ If the state changes are not showing in Home Assistant:
    ```
    If successful, it will return a JSON message containing `"message": "API running."`.
 2. **Review Daemon Logs**:
-   - `cat ~/Documents/Teams\ Assistant/Scripts/teams_status.log` (Check logs for successful POST events).
-   - `cat ~/Documents/Teams\ Assistant/Scripts/teams_status.err` (Check for network exceptions or invalid tokens).
+   - `cat ~/TeamsAssist-macOS/Scripts/teams_status.log` (Check logs for successful POST events).
+   - `cat ~/TeamsAssist-macOS/Scripts/teams_status.err` (Check for network exceptions or invalid tokens).

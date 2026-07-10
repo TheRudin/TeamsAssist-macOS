@@ -29,6 +29,7 @@ def install():
         "Label": LABEL,
         "ProgramArguments": [
             "/usr/bin/python3",
+            "-u",
             daemon_script
         ],
         "RunAtLoad": True,
