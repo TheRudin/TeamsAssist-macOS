@@ -1,0 +1,31 @@
+{
+  "ha_token": "<Insert token>",
+  "ha_url": "<HA URL>",
+  "teams_version": "Auto",
+  "check_interval": 2,
+  "status_entity": "sensor.teams_status",
+  "status_friendly_name": "Microsoft Teams status",
+  "activity_entity": "sensor.teams_activity",
+  "activity_friendly_name": "Microsoft Teams activity",
+  "monitoring_entity": "binary_sensor.teams_monitoring",
+  "monitoring_friendly_name": "Microsoft Teams monitoring",
+  "languages": {
+    "Available": "Available",
+    "Busy": "Busy",
+    "OnThePhone": "On the phone",
+    "Away": "Away",
+    "BeRightBack": "Be right back",
+    "DoNotDisturb": "Do not disturb",
+    "Presenting": "Presenting",
+    "Focusing": "Focusing",
+    "InAMeeting": "In a meeting",
+    "Offline": "Offline",
+    "NotInACall": "Not in a call",
+    "InACall": "In a call"
+  },
+  "icons": {
+    "InACall": "mdi:phone-in-talk-outline",
+    "NotInACall": "mdi:phone-off",
+    "Monitoring": "mdi:api"
+  }
+}
