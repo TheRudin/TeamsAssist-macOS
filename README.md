@@ -29,7 +29,16 @@ graph TD
 ### 1. Home Assistant Preparation
 Configure the template sensors in your Home Assistant config to receive the updates. For detailed instructions, see the **[Home Assistant Setup Guide](HOMEASSISTANT_SETUP.md)**.
 
-### 2. Configuration (`settings.json`)
+### 2. Generate Long-Lived Access Token (CLI Helper)
+You can easily generate your 10-year access token directly from the command line:
+```bash
+./Scripts/create_token.sh
+```
+This script will prompt you for your Home Assistant URL, username, and password, perform the login flow and WebSocket handshake, and output the token.
+
+*(Alternatively, you can generate the token in the Home Assistant UI under User Profile > Long-Lived Access Tokens > Create Token).*
+
+### 3. Configuration (`settings.json`)
 Edit the **[settings.json](Scripts/settings.json)** file located in the `Scripts` directory:
 
 | Setting Key | Type | Description | Default |
@@ -42,7 +51,7 @@ Edit the **[settings.json](Scripts/settings.json)** file located in the `Scripts
 | `activity_entity` | String| The sensor name for call activity in HA. | `"sensor.teams_activity"` |
 | `monitoring_entity`| String| Binary sensor showing if the daemon is currently running. | `"binary_sensor.teams_monitoring"` |
 
-### 3. Register background agent
+### 4. Register background agent
 Open your macOS Terminal, navigate to the folder, and run:
 ```bash
 python3 Scripts/setup_launchagent.py
