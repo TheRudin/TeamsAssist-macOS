@@ -1,69 +1,71 @@
-# TeamsAssist
+# TeamsAssist (macOS)
 
+A native macOS background utility to monitor Microsoft Teams presence and call activity, and sync them with your Home Assistant smart home system. 
 
+## How It Works
 
-# Introduction
-We're working a lot at our home office these days. Several people already found inventive solutions to make working in the home office more comfortable. One of these ways is to automate activities in your home automatation system based on your status on Microsoft Teams.
+This daemon operates entirely locally without requiring Microsoft Graph API admin consent. It supports both **Classic Teams** and the **New Teams (Work or School)** client.
 
-Microsoft provides the status of your account that is used in Teams via the Graph API. To access the Graph API, your organization needs to grant consent for the organization so everybody can read their Teams status. Since my organization didn't want to grant consent, I needed to find a workaround, which I found in monitoring the Teams client logfile for certain changes.
-
-This script makes use of two sensors that are created in Home Assistant up front:
-* sensor.teams_status
-* sensor.teams_activity
-
-sensor.teams_status displays the availability status of your Teams client. sensor.teams_activity shows if you are in a call or not based on system power assertions (for New Teams) or logs (for Classic Teams).
-
-# Important
-This solution is created to work with Home Assistant on macOS. It uses a Python script that runs in the background as a launch agent.
-
-# Requirements
-* Create the three Teams sensors in the Home Assistant configuration.yaml file
-
-```yaml
-input_text:
-  teams_status:
-    name: Microsoft Teams status
-    icon: mdi:microsoft-teams
-  teams_activity:
-    name: Microsoft Teams activity
-    icon: mdi:phone-off
-
-sensor:
-  - platform: template
-    sensors:
-      teams_status: 
-        friendly_name: "Microsoft Teams status"
-        value_template: "{{states('input_text.teams_status')}}"
-        icon_template: "{{state_attr('input_text.teams_status','icon')}}"
-        unique_id: sensor.teams_status
-      teams_activity:
-        friendly_name: "Microsoft Teams activity"
-        value_template: "{{states('input_text.teams_activity')}}"
-        unique_id: sensor.teams_activity
-
+```mermaid
+graph TD
+    A["Microsoft Teams Client"] -->|"Power Assertion (New Teams)"| B["macOS Power Daemon (powerd)"]
+    A -->|"logs.txt (Classic Teams)"| C["Local Log File"]
+    B --> D["get_teams_status.py (Daemon)"]
+    C --> D
+    D -->|"Read configuration"| E["settings.json"]
+    D -->|"POST request"| F["Home Assistant REST API"]
+    F --> G["sensor.teams_status"]
+    F --> H["sensor.teams_activity"]
 ```
-* Generate a Long-lived access token ([see HA documentation](https://developers.home-assistant.io/docs/auth_api/#long-lived-access-token))
-* Copy and temporarily save the token somewhere you can find it later
-* Restart Home Assistant to have the new sensors added
-* Edit the `Scripts/settings.json` file and:
-  * Replace `<Insert token>` with the token you generated
-  * Replace `<HA URL>` with the URL to your Home Assistant server (e.g., `http://homeassistant.local:8123`)
-  * Adjust language or entity settings if needed
-* Register and start the background agent using:
-  ```bash
-  python3 Scripts/setup_launchagent.py
-  ```
 
-To stop and uninstall the background agent at any time, run:
+- **New Teams Call Detection**: Monitors macOS sleep assertions (`pmset`). When a meeting is active, Teams prevents the system from sleeping, creating a `Microsoft Teams Call in progress` assertion.
+- **Classic Teams Presence**: Monitors the local `logs.txt` file for taskbar icon overlays to extract precise presence (Available, Busy, Away, etc.).
+- **Background Execution**: Runs as a lightweight macOS Launch Agent daemon with zero external dependencies (pure Python 3).
+
+---
+
+## Installation & Setup
+
+### 1. Home Assistant Preparation
+Configure the template sensors in your Home Assistant config to receive the updates. For detailed instructions, see the **[Home Assistant Setup Guide](HOMEASSISTANT_SETUP.md)**.
+
+### 2. Configuration (`settings.json`)
+Edit the **[settings.json](Scripts/settings.json)** file located in the `Scripts` directory:
+
+| Setting Key | Type | Description | Default |
+| :--- | :--- | :--- | :--- |
+| `ha_url` | String | The URL of your Home Assistant instance. | `"<HA URL>"` |
+| `ha_token` | String | Long-lived access token generated from your HA user profile. | `"<Insert token>"` |
+| `teams_version` | String | `"Auto"`, `"New"`, or `"Old"`. `"Auto"` detects based on active processes. | `"Auto"` |
+| `check_interval` | Integer| How often the script checks for status changes (in seconds). | `2` |
+| `status_entity` | String | The sensor name for Teams availability status in HA. | `"sensor.teams_status"` |
+| `activity_entity` | String| The sensor name for call activity in HA. | `"sensor.teams_activity"` |
+| `monitoring_entity`| String| Binary sensor showing if the daemon is currently running. | `"binary_sensor.teams_monitoring"` |
+
+### 3. Register background agent
+Open your macOS Terminal, navigate to the folder, and run:
+```bash
+python3 Scripts/setup_launchagent.py
+```
+This registers, creates, and loads the Launch Agent. The daemon will now run continuously in the background and start automatically whenever you log in to your Mac.
+
+---
+
+## Daemon Management
+
+### Viewing Logs
+You can monitor log messages or troubleshoot issues using standard terminal commands:
+- **Activity log**: `tail -f Scripts/teams_status.log`
+- **Error log**: `tail -f Scripts/teams_status.err`
+
+### Stopping the Agent
+To disable and uninstall the background agent:
 ```bash
 python3 Scripts/setup_launchagent.py --uninstall
 ```
 
-After completing the steps above, start your Teams client and verify if the status and activity is updated as expected. You can check the background logs in `Scripts/teams_status.log` or error logs in `Scripts/teams_status.err`.
-
-# BluePrint
-
-[![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FHassassistant%2FTeamsAssist%2Fblob%2Fmain%2FAutomation%2Fteams-light.yaml) 
-
-Changes the color of a light based on your Teams status.
-
+### Manual Controls (Testing)
+You can manually override states to test your Home Assistant automations without joining a call:
+- Set status to Offline: `python3 Scripts/get_teams_status.py --status Offline`
+- Set status to Available: `python3 Scripts/get_teams_status.py --status Available`
+- Set activity to In a call: `python3 Scripts/get_teams_status.py --activity "In a call"`

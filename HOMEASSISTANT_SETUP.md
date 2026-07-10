@@ -1,10 +1,12 @@
 # Microsoft Teams Home Assistant Integration Guide
 
-This guide describes how to configure Home Assistant to work with **TeamsAssist (macOS)** and how to use the sensors for automations.
+This guide details how to configure sensors, write robust automations, and build dashboard cards to utilize **TeamsAssist (macOS)** data inside Home Assistant.
 
-## 1. Setup Sensors in Home Assistant
+---
 
-Add the following configuration to your Home Assistant `configuration.yaml` file (or equivalent packages directory).
+## 1. Sensor Configuration (`configuration.yaml`)
+
+Add this configuration to your Home Assistant setup (typically in `configuration.yaml` or a dedicated package file).
 
 ```yaml
 # Input Text Helpers to receive states from the macOS script
@@ -16,7 +18,7 @@ input_text:
     name: Microsoft Teams activity
     icon: mdi:phone-off
 
-# Template Sensors to display the values neatly in your UI
+# Template Sensors to format values and attributes for the UI
 sensor:
   - platform: template
     sensors:
@@ -29,36 +31,49 @@ sensor:
         friendly_name: "Microsoft Teams activity"
         value_template: "{{states('input_text.teams_activity')}}"
         unique_id: sensor.teams_activity
+
+# Binary Sensor to monitor if the macOS background daemon is active
+binary_sensor:
+  - platform: template
+    sensors:
+      teams_monitoring:
+        friendly_name: "Microsoft Teams Monitoring"
+        value_template: "{{ is_state('binary_sensor.teams_monitoring', 'on') }}"
+        device_class: connectivity
+        unique_id: binary_sensor.teams_monitoring
 ```
 
-After adding this code, **restart Home Assistant** to create the entities.
-
-## 2. Sensor States and Mappings
-
-### Teams Status (`sensor.teams_status`)
-This sensor displays your current presence status. 
-- **Available** (Green status)
-- **Busy** (Red status)
-- **On the phone** (Red status)
-- **Away** / **Be right back** (Yellow status)
-- **Do not disturb** / **Presenting** / **Focusing** (Red/Purple status)
-- **In a meeting** (Red status)
-- **Offline** (Grey status - Teams is closed)
-
-### Teams Activity (`sensor.teams_activity`)
-This sensor shows call activity:
-- **In a call**
-- **Not in a call**
+*Note: Restart Home Assistant after adding these sensors to activate them.*
 
 ---
 
-## 3. Automation Example
+## 2. Lovelace Dashboard UI Example
 
-Below is an automation example that turns a status light **Red** when you are in a meeting or busy, **Yellow** when away, **Green** when available, and **Off** when offline.
+Add a custom dashboard card to show your active Teams status on your home tablet or dashboard.
 
 ```yaml
-alias: Office Status Light Automations
-description: Updates office light color based on Microsoft Teams presence
+type: entities
+title: Workspace Status
+show_header_toggle: false
+entities:
+  - entity: sensor.teams_status
+    name: Presence
+  - entity: sensor.teams_activity
+    name: Call Activity
+  - entity: binary_sensor.teams_monitoring
+    name: Daemon Online Status
+```
+
+---
+
+## 3. Automation Examples
+
+### Example A: Status Light Color Automation
+This automation adjusts the color of a smart light based on your presence. It turns **Red** for calls/meetings, **Green** when available, **Yellow** when away, and **Off** when offline.
+
+```yaml
+alias: "Teams: Update Office Status Light Color"
+description: "Changes light color based on Microsoft Teams presence"
 trigger:
   - platform: state
     entity_id: sensor.teams_status
@@ -75,7 +90,7 @@ action:
             target:
               entity_id: light.office_status_light
             data:
-              rgb_color: [255, 0, 0]
+              rgb_color: [255, 30, 10]
               brightness: 255
 
       # YELLOW: Away / Be right back
@@ -88,7 +103,7 @@ action:
             target:
               entity_id: light.office_status_light
             data:
-              rgb_color: [255, 150, 0]
+              rgb_color: [252, 150, 0]
               brightness: 150
 
       # GREEN: Available
@@ -101,7 +116,7 @@ action:
             target:
               entity_id: light.office_status_light
             data:
-              rgb_color: [0, 255, 0]
+              rgb_color: [0, 255, 10]
               brightness: 255
 
       # OFF: Offline
@@ -117,9 +132,33 @@ action:
 mode: single
 ```
 
-## 4. Troubleshooting Entities in Home Assistant
+### Example B: Auto-Off Status Light when Daemon Stops
+To prevent the status light from staying lit (e.g. when you turn off your Mac or close your laptop), this automation turns off the light when the connection to the daemon is lost.
 
-If your sensors are not updating:
-1. Check the background logs on your Mac: `cat ~/Documents/Teams\ Assistant/Scripts/teams_status.log`.
-2. Check the error logs on your Mac: `cat ~/Documents/Teams\ Assistant/Scripts/teams_status.err`.
-3. Verify that your Long-Lived Access Token and Home Assistant URL are correct in your local `settings.json` file.
+```yaml
+alias: "Teams: Turn Off Light when Daemon is Offline"
+description: "Turns off status light if TeamsAssist daemon stops running"
+trigger:
+  - platform: state
+    entity_id: binary_sensor.teams_monitoring
+    to: "off"
+action:
+  - service: light.turn_off
+    target:
+      entity_id: light.office_status_light
+mode: single
+```
+
+---
+
+## 4. Troubleshooting Status Synced Entities
+
+If the state changes are not showing in Home Assistant:
+1. **Check the REST API Connection**: Open a terminal on your Mac and test connection with:
+   ```bash
+   curl -X GET -H "Authorization: Bearer <your_token>" <your_ha_url>/api/
+   ```
+   If successful, it will return a JSON message containing `"message": "API running."`.
+2. **Review Daemon Logs**:
+   - `cat ~/Documents/Teams\ Assistant/Scripts/teams_status.log` (Check logs for successful POST events).
+   - `cat ~/Documents/Teams\ Assistant/Scripts/teams_status.err` (Check for network exceptions or invalid tokens).
